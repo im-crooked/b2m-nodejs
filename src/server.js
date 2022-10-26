@@ -1,26 +1,26 @@
-'use strict'
-//const { createLogger, format, transports } = require('winston')
-const express = require('express')
+"use strict";
+const { createLogger, format, transports } = require("winston");
+const express = require("express");
 //const Prometheus = require('prom-client')
 
-// const logger = createLogger({
-//   level: 'debug',
-//   format: format.combine(
-//     format.timestamp({
-//       format: "YYYY-MM-DD'T'HH:mm:ss.SSSZ"
-//     }),
-//     format.json()
-//   ),
-//   transports: [new transports.Console()]
-// });
+const logger = createLogger({
+  level: "debug",
+  format: format.combine(
+    format.timestamp({
+      format: "YYYY-MM-DD'T'HH:mm:ss.SSSZ",
+    }),
+    format.json()
+  ),
+  transports: [new transports.Console()],
+});
 
 var health = true;
 var msg;
 
 // const metricsInterval = Prometheus.collectDefaultMetrics()
 
-const app = express()
-const port = process.env.PORT || 3001
+const app = express();
+const port = process.env.PORT || 3001;
 
 // const checkoutsTotal = new Prometheus.Counter({
 //   name: 'checkouts_total',
@@ -40,45 +40,46 @@ const port = process.env.PORT || 3001
 //   next()
 // })
 
-app.get('/', (req, res, next) => {
-  res.redirect('/checkout')
-})
+app.get("/", (req, res, next) => {
+  res.redirect("/checkout");
+});
 
-app.get('/healthz', (req, res, next) => {
-  if(health) {
-   res.json({ status: 'ok'})
-   next()
- } else {
-   next(new Error('Application unhealthy'))
- }
-})
+app.get("/healthz", (req, res, next) => {
+  if (health) {
+    res.json({ status: "ok" });
+    next();
+  } else {
+    next(new Error("Application unhealthy"));
+  }
+});
 
-app.get('/bad-health', (req, res, next) => {
-  health = false
-  res.json({ status: 'App health set to \'false\''})
-  next()
-})
+app.get("/bad-health", (req, res, next) => {
+  health = false;
+  res.json({ status: "App health set to 'false'" });
+  next();
+});
 
-app.get('/checkout', (req, res, next) => {
-  const paymentMethod = Math.round(Math.random() * 100) > 20 ? 'card' : 'paypal'
-  const errorState =  Math.round(Math.random() * 100) > 20 ? 0 : 1
+app.get("/checkout", (req, res, next) => {
+  const paymentMethod =
+    Math.round(Math.random() * 100) > 20 ? "card" : "paypal";
+  const errorState = Math.round(Math.random() * 100) > 20 ? 0 : 1;
   // checkoutsTotal.inc({
   //   payment_method: paymentMethod
   // })
   var delay = Math.round(Math.random() * 100);
   if (errorState) {
-    msg = 'RSAP0010E: Severe problem detected'
-    next(new Error(msg))
-//    logger.error(msg, {"errCode": "RSAP0010E", "transactionTime": delay})
+    msg = "RSAP0010E: Severe problem detected";
+    next(new Error(msg));
+    logger.error(msg, { errCode: "RSAP0010E", transactionTime: delay });
   } else {
-    msg = 'RSAP0001I: Transaction OK'
-   setTimeout(() => {
-    res.json({ status: msg, transactionTime: delay + 'ms' })
-    next()
-   }, delay)
-//   logger.info(msg, {"errCode": "RSAP0001I", "transactionTime": delay})
+    msg = "RSAP0001I: Transaction OK";
+    setTimeout(() => {
+      res.json({ status: msg, transactionTime: delay + "ms" });
+      next();
+    }, delay);
+    logger.info(msg, { errCode: "RSAP0001I", transactionTime: delay });
   }
-})
+});
 
 // app.get('/metrics', (req, res) => {
 //   res.set('Content-Type', Prometheus.register.contentType)
@@ -86,10 +87,10 @@ app.get('/checkout', (req, res, next) => {
 // })
 
 app.use((err, req, res, next) => {
-  res.statusCode = 500
-  res.json({ error: err.message })
-  next()
-})
+  res.statusCode = 500;
+  res.json({ error: err.message });
+  next();
+});
 
 // app.use((req, res, next) => {
 //   const responseTimeInMs = Date.now() - res.locals.startEpoch
@@ -101,18 +102,18 @@ app.use((err, req, res, next) => {
 // })
 
 const server = app.listen(port, () => {
-  console.log(`btm-node.js app listening on port ${port}!`)
-})
+  console.log(`btm-node.js app listening on port ${port}!`);
+});
 
-process.on('SIGTERM', () => {
-  clearInterval(metricsInterval)
+process.on("SIGTERM", () => {
+  clearInterval(metricsInterval);
 
   server.close((err) => {
     if (err) {
-      console.error(err)
-      process.exit(1)
+      console.error(err);
+      process.exit(1);
     }
 
-    process.exit(0)
-  })
-})
+    process.exit(0);
+  });
+});
